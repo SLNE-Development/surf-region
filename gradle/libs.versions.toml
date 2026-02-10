@@ -1,0 +1,5 @@
+[versions]
+knbt = "0.11.9"
+
+[libraries]
+knbt = { module = "net.benwoodworth.knbt:knbt", version.ref = "knbt" }
