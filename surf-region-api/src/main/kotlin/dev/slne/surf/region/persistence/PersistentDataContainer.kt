@@ -15,6 +15,9 @@ data class PersistentDataContainer(
     private var _dirty: Boolean = false
     val isDirty get() = _dirty
 
+    fun hasData(key: Key): Boolean =
+        data.containsKey(key)
+
     @Suppress("UNCHECKED_CAST")
     fun <T : RegionData> getData(key: Key): T? {
         return data[key] as T?
@@ -32,6 +35,10 @@ data class PersistentDataContainer(
         }
 
         _dirty = true
+    }
+
+    fun removeData(key: Key) {
+        data.remove(key)
     }
 
     fun markClean() {

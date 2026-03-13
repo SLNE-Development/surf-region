@@ -39,16 +39,22 @@ data class SurfChunk(
         }
     }
 
-    fun getBlockAt(x: Int, y: Int, z: Int): SurfBlock {
-        val sectionIndex = y shr 4
-        val sectionY = y and 15
+    fun getBlockAt(worldX: Int, worldY: Int, worldZ: Int): SurfBlock {
+        val sectionIndex = worldY shr 4
+        val sectionY = worldY and 15
+
+        val localX = worldX and 15
+        val localZ = worldZ and 15
 
         val section = getSection(sectionIndex)
 
         return section.getOrCreateBlock(
-            x and 15,
+            localX,
             sectionY,
-            z and 15
+            localZ,
+            worldX,
+            worldY,
+            worldZ
         )
     }
 

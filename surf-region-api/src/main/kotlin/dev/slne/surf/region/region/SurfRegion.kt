@@ -18,7 +18,8 @@ class SurfRegion(
     val instance: RegionInstance
 ) {
     private val regionStorage: RegionStorage<*> = instance.regionStorageSelector(this)
-    private val chunks = Long2ObjectMaps.synchronize(mutableLong2ObjectMapOf<SurfChunk>())
+    private val _chunks = Long2ObjectMaps.synchronize(mutableLong2ObjectMapOf<SurfChunk>())
+    val chunks get() = _chunks.values.toList()
     private fun chunkKey(x: Int, z: Int) = (x.toLong() shl 32) or (z.toLong() and 0xffffffffL)
 
     val regionFolder: Path get() = instance.regionsFolder.resolve(worldId.toString())
@@ -30,12 +31,12 @@ class SurfRegion(
     var loaded: Boolean = false
         private set
 
-    val isDirty: Boolean get() = chunks.values.any { it.isDirty }
+    val isDirty: Boolean get() = _chunks.values.any { it.isDirty }
 
     suspend fun save() {
         if (!loaded || !isDirty) return
 
-        regionStorage.writeData(chunks.values)
+        regionStorage.writeData(_chunks.values)
     }
 
     suspend fun load() {
@@ -48,19 +49,19 @@ class SurfRegion(
 
         val data = regionStorage.readData()
 
-        chunks.clear()
-        chunks.putAll(data.associateBy { chunkKey(it.chunkX, it.chunkZ) })
+        _chunks.clear()
+        _chunks.putAll(data.associateBy { chunkKey(it.chunkX, it.chunkZ) })
 
         loaded = true
     }
 
     fun getChunkAt(x: Int, z: Int): SurfChunk {
         val key = chunkKey(x, z)
-        var chunk = chunks[key]
+        var chunk = _chunks[key]
 
         if (chunk == null) {
             chunk = SurfChunk(x, z)
-            chunks[key] = chunk
+            _chunks[key] = chunk
         }
 
         return chunk

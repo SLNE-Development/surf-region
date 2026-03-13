@@ -20,11 +20,14 @@ class ChunkSection {
     private var dirty = false
     val isDirty get() = dirty || _blocks.any { it.isDirty }
 
-    fun getOrCreateBlock(x: Int, y: Int, z: Int): SurfBlock {
+    fun getOrCreateBlock(
+        x: Int, y: Int, z: Int,
+        worldX: Int, worldY: Int, worldZ: Int,
+    ): SurfBlock {
         val key = x + (z shl 4) + (y shl 8)
 
         return blocksMap.getOrPut(key) {
-            SurfBlock(x, y, z).apply {
+            SurfBlock(worldX, worldY, worldZ).apply {
                 _blocks.add(this)
                 dirty = true
             }

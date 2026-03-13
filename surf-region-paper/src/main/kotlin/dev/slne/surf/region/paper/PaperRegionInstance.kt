@@ -10,6 +10,7 @@ import dev.slne.surf.region.paper.listener.events.SurfRegionSaveEvent
 import dev.slne.surf.region.paper.listener.events.SurfRegionUnloadEvent
 import dev.slne.surf.region.paper.listener.listeners.essential.RegionListeners
 import dev.slne.surf.region.paper.listener.listeners.modification.RegionBlockModificationListener
+import dev.slne.surf.region.paper.listener.listeners.modification.listeners.PistonListener
 import dev.slne.surf.region.region.SurfRegion
 import dev.slne.surf.region.storage.JsonRegionStorage
 import dev.slne.surf.region.storage.RegionStorage
@@ -33,11 +34,13 @@ class PaperRegionInstance(
     val scope: CoroutineScope by lazy { plugin.scope }
 
     suspend fun onLoad() {
-        RegionDataSerializer.register<ModifiedBlocksData>()
+        RegionDataSerializer.register<ModifiedBlockData>()
     }
 
     suspend fun onEnable() {
         registerListeners()
+
+        VisualizerJob(this).start()
     }
 
     suspend fun onDisable() {
@@ -84,6 +87,7 @@ class PaperRegionInstance(
     }
 
     private fun registerModificationListeners() {
+        listeners.add(PistonListener(this))
         listeners.add(RegionBlockModificationListener(this))
     }
 
