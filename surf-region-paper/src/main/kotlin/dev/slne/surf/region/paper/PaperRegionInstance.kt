@@ -10,6 +10,9 @@ import dev.slne.surf.region.paper.listener.events.SurfRegionSaveEvent
 import dev.slne.surf.region.paper.listener.events.SurfRegionUnloadEvent
 import dev.slne.surf.region.paper.listener.listeners.essential.RegionListeners
 import dev.slne.surf.region.paper.listener.listeners.modification.RegionBlockModificationListener
+import dev.slne.surf.region.region.SurfRegion
+import dev.slne.surf.region.storage.JsonRegionStorage
+import dev.slne.surf.region.storage.RegionStorage
 import dev.slne.surf.surfapi.bukkit.api.event.register
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +25,10 @@ class PaperRegionInstance(
     val plugin: SuspendingJavaPlugin,
     regionsFolder: Path = plugin.dataPath.resolve("regions"),
     private val registerModificationListeners: Boolean = true,
-) : RegionInstance(regionsFolder) {
+    regionStorageSelector: (SurfRegion) -> RegionStorage<*> = { region ->
+        JsonRegionStorage(region)
+    }
+) : RegionInstance(regionsFolder, regionStorageSelector) {
     private val listeners = mutableObjectListOf<Listener>()
     val scope: CoroutineScope by lazy { plugin.scope }
 

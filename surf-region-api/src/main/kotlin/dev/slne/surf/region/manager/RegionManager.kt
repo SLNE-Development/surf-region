@@ -42,7 +42,7 @@ class RegionManager(
                 return region to false
             }
 
-            region = SurfRegion(x, z, worldRegionsFolder).apply {
+            region = SurfRegion(worldId, x, z, instance).apply {
                 _regions[key] = this
             }
 

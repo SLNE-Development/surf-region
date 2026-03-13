@@ -2,6 +2,9 @@ package dev.slne.surf.region
 
 import dev.slne.surf.region.handler.RegionHandler
 import dev.slne.surf.region.manager.RegionManager
+import dev.slne.surf.region.region.SurfRegion
+import dev.slne.surf.region.storage.CborRegionStorage
+import dev.slne.surf.region.storage.RegionStorage
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
@@ -9,7 +12,10 @@ import java.nio.file.Path
 import java.util.*
 
 open class RegionInstance(
-    private val regionsFolder: Path
+    val regionsFolder: Path,
+    val regionStorageSelector: (SurfRegion) -> RegionStorage<*> = { region ->
+        CborRegionStorage(region)
+    }
 ) {
     private val _regionManagers = mutableObjectSetOf<RegionManager>()
     val regionManagers get() = _regionManagers.freeze()
