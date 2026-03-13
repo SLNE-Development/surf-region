@@ -1,6 +1,6 @@
 package dev.slne.surf.region.persistence
 
-import dev.slne.surf.region.data.RegionData
+import dev.slne.surf.region.region.data.RegionData
 import net.kyori.adventure.key.Key
 
 interface HasPersistentData {

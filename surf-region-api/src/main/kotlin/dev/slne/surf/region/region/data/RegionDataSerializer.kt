@@ -1,6 +1,6 @@
 @file:OptIn(InternalSerializationApi::class)
 
-package dev.slne.surf.region.data
+package dev.slne.surf.region.region.data
 
 import dev.slne.surf.region.utils.InternalRegionApi
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule

@@ -1,24 +1,27 @@
 package dev.slne.surf.region.manager
 
 import dev.slne.surf.region.RegionInstance
-import dev.slne.surf.region.region.RegionKey
 import dev.slne.surf.region.region.SurfRegion
+import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 class RegionManager(
     val worldId: UUID,
     regionsFolder: Path,
     private val instance: RegionInstance
 ) {
-    private val _regions = ConcurrentHashMap<RegionKey, SurfRegion>()
+    private val _regions = Long2ObjectMaps.synchronize(mutableLong2ObjectMapOf<SurfRegion>())
     val regions get() = _regions.values.toList()
 
     private val worldRegionsFolder = regionsFolder.resolve(worldId.toString())
+
+    private fun regionKey(x: Int, z: Int) =
+        (x.toLong() shl 32) or (z.toLong() and 0xffffffffL)
 
     suspend fun getRegion(
         x: Int,
@@ -33,8 +36,7 @@ class RegionManager(
         loadIfNotLoaded: Boolean = true,
         createIfNotExists: Boolean = true,
     ): Pair<SurfRegion?, Boolean> {
-        val key = RegionKey(x, z)
-        var region = _regions[key]
+        var region = _regions[regionKey(x, z)]
         var created = false
 
         if (region == null) {
@@ -43,7 +45,7 @@ class RegionManager(
             }
 
             region = SurfRegion(worldId, x, z, instance).apply {
-                _regions[key] = this
+                _regions[regionKey(x, z)] = this
             }
 
             created = true
@@ -90,7 +92,7 @@ class RegionManager(
             saveRegion(region)
         }
 
-        _regions.remove(RegionKey(region.x, region.z))
+        _regions.remove(regionKey(region.x, region.z))
 
         instance.unloadHandlers.forEach { handler ->
             handler.handle(region)

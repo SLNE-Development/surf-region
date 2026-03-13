@@ -3,7 +3,6 @@ package dev.slne.surf.region.paper
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.region.RegionInstance
-import dev.slne.surf.region.data.RegionDataSerializer
 import dev.slne.surf.region.manager.RegionManager
 import dev.slne.surf.region.paper.listener.events.SurfRegionLoadEvent
 import dev.slne.surf.region.paper.listener.events.SurfRegionSaveEvent
@@ -12,6 +11,7 @@ import dev.slne.surf.region.paper.listener.listeners.essential.RegionListeners
 import dev.slne.surf.region.paper.listener.listeners.modification.RegionBlockModificationListener
 import dev.slne.surf.region.paper.listener.listeners.modification.listeners.PistonListener
 import dev.slne.surf.region.region.SurfRegion
+import dev.slne.surf.region.region.data.RegionDataSerializer
 import dev.slne.surf.region.storage.JsonRegionStorage
 import dev.slne.surf.region.storage.RegionStorage
 import dev.slne.surf.surfapi.bukkit.api.event.register

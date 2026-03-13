@@ -1,6 +1,6 @@
 package dev.slne.surf.region.persistence
 
-import dev.slne.surf.region.data.RegionData
+import dev.slne.surf.region.region.data.RegionData
 import dev.slne.surf.surfapi.core.api.serializer.adventure.key.SerializableKey
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

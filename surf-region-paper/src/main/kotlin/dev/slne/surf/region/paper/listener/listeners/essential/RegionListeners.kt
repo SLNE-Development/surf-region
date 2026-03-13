@@ -8,10 +8,21 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.ChunkUnloadEvent
+import org.bukkit.event.world.WorldSaveEvent
 
 class RegionListeners(
     private val instance: PaperRegionInstance,
 ) : Listener {
+    @EventHandler
+    fun onWorldSave(event: WorldSaveEvent) {
+        val world = event.world
+        val regionManager = instance.findRegionManager(world) ?: return
+
+        instance.plugin.launch {
+            regionManager.saveAll()
+        }
+    }
+
     @EventHandler
     fun onChunkUnload(event: ChunkUnloadEvent) {
         val world = event.world

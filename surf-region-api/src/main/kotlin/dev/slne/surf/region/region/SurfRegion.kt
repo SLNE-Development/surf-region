@@ -1,8 +1,8 @@
 package dev.slne.surf.region.region
 
 import dev.slne.surf.region.RegionInstance
-import dev.slne.surf.region.block.SurfBlock
-import dev.slne.surf.region.chunk.SurfChunk
+import dev.slne.surf.region.region.chunk.SurfChunk
+import dev.slne.surf.region.region.chunk.block.SurfBlock
 import dev.slne.surf.region.storage.RegionStorage
 import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps

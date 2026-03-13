@@ -1,8 +1,8 @@
-package dev.slne.surf.region.chunk
+package dev.slne.surf.region.region.chunk
 
-import dev.slne.surf.region.block.SurfBlock
 import dev.slne.surf.region.persistence.HasPersistentData
 import dev.slne.surf.region.persistence.PersistentDataContainer
+import dev.slne.surf.region.region.chunk.block.SurfBlock
 import dev.slne.surf.surfapi.core.api.util.mutableInt2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.toObjectList
 import kotlinx.serialization.SerialName

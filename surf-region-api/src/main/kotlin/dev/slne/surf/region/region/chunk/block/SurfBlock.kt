@@ -1,4 +1,4 @@
-package dev.slne.surf.region.block
+package dev.slne.surf.region.region.chunk.block
 
 import dev.slne.surf.region.persistence.HasPersistentData
 import dev.slne.surf.region.persistence.PersistentDataContainer

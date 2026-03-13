@@ -1,6 +1,6 @@
 package dev.slne.surf.region.paper
 
-import dev.slne.surf.region.data.RegionData
+import dev.slne.surf.region.region.data.RegionData
 import dev.slne.surf.surfapi.core.api.messages.adventure.key
 import kotlinx.serialization.Serializable
 

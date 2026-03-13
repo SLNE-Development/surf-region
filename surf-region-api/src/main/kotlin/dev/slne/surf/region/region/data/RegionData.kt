@@ -1,4 +1,4 @@
-package dev.slne.surf.region.data
+package dev.slne.surf.region.region.data
 
 import kotlinx.serialization.Polymorphic
 
