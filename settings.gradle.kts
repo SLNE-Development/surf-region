@@ -10,3 +10,6 @@ plugins {
 }
 
 rootProject.name = "surf-region"
+
+include("surf-region-api")
+include("surf-region-paper")

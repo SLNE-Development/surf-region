@@ -1,6 +1,4 @@
-plugins {
-    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+"
+allprojects {
+    group = "dev.slne.surf"
+    version = findProperty("version") as String
 }
-
-group = "dev.slne.surf"
-version = findProperty("version") as String
