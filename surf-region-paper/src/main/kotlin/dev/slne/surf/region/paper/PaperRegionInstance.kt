@@ -3,6 +3,7 @@ package dev.slne.surf.region.paper
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.region.RegionInstance
+import dev.slne.surf.region.data.RegionDataSerializer
 import dev.slne.surf.region.manager.RegionManager
 import dev.slne.surf.region.paper.listener.events.SurfRegionLoadEvent
 import dev.slne.surf.region.paper.listener.events.SurfRegionSaveEvent
@@ -26,6 +27,7 @@ class PaperRegionInstance(
     val scope: CoroutineScope by lazy { plugin.scope }
 
     suspend fun onLoad() {
+        RegionDataSerializer.register<ModifiedBlocksData>()
     }
 
     suspend fun onEnable() {

@@ -66,9 +66,13 @@ object RegionDataSerializer {
         return JSON.encodeToString(jsonObject)
     }
 
-    private val JSON = Json {
-        prettyPrint = false
-        ignoreUnknownKeys = true
-        serializersModule = RegionDataSerializer.serializersModule
-    }
+    private val JSON
+        get() = Json {
+            prettyPrint = false
+            ignoreUnknownKeys = true
+            serializersModule = RegionDataSerializer.serializersModule
+
+            encodeDefaults = true
+            explicitNulls = false
+        }
 }

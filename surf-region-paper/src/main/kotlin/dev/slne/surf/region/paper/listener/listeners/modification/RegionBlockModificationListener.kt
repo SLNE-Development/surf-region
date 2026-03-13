@@ -59,7 +59,13 @@ class RegionBlockModificationListener(
         val regionZ = worldZ shr 9
 
         instance.scope.launch {
-            val region = regionManager.loadRegion(regionX, regionZ)
+            val region = regionManager.getRegion(
+                x = regionX,
+                z = regionZ,
+                loadIfNotLoaded = true,
+                createIfNotExists = true
+            )
+                ?: error("Region should have been loaded or created successfully at $regionX, $regionZ")
 
             region.markBlockModified(worldX, worldY, worldZ)
         }

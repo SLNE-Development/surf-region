@@ -1,7 +1,9 @@
 package dev.slne.surf.region.chunk
 
 import dev.slne.surf.region.block.SurfBlock
+import kotlinx.serialization.Serializable
 
+@Serializable
 class ChunkSection {
     private val blocks = arrayOfNulls<SurfBlock>(4096)
     private var dirty = false

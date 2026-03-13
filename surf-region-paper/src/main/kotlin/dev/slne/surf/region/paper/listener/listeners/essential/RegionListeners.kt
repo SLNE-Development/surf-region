@@ -31,10 +31,6 @@ class RegionListeners(
 
             if (loadedChunks <= 0) {
                 regionManager.unloadRegion(region, true)
-                log.atInfo().log("Region unloaded successfully at ${regionX}, $regionZ")
-            } else {
-                log.atInfo()
-                    .log("Not unloading region at ${regionX}, $regionZ because it still has $loadedChunks loaded chunks")
             }
         }
     }

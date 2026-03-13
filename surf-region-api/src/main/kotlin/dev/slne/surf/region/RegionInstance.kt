@@ -46,7 +46,7 @@ open class RegionInstance(
     suspend fun unloadRegions(saveBeforeUnload: Boolean = true) {
         regionManagers.forEach { regionManager ->
             regionManager.regions.forEach { region ->
-                regionManager.unloadRegion(region.x, region.z, saveBeforeUnload)
+                regionManager.unloadRegion(region, saveBeforeUnload)
             }
         }
     }
