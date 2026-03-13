@@ -1,6 +1,7 @@
 package dev.slne.surf.region.manager
 
 import dev.slne.surf.region.RegionInstance
+import dev.slne.surf.region.region.RegionKey
 import dev.slne.surf.region.region.SurfRegion
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -14,8 +15,8 @@ class RegionManager(
     regionsFolder: Path,
     private val instance: RegionInstance
 ) {
-    private val _regions = ConcurrentHashMap.newKeySet<SurfRegion>()
-    val regions get() = _regions.toList()
+    private val _regions = ConcurrentHashMap<RegionKey, SurfRegion>()
+    val regions get() = _regions.values.toList()
 
     private val worldRegionsFolder = regionsFolder.resolve(worldId.toString())
 
@@ -23,51 +24,49 @@ class RegionManager(
         x: Int,
         z: Int,
         loadIfNotLoaded: Boolean = true,
-    ) = getOrCreateRegion(x, z, loadIfNotLoaded).first
+        createIfNotExists: Boolean = true,
+    ) = getRegionPair(x, z, loadIfNotLoaded, createIfNotExists).first
 
-    suspend fun getOrCreateRegion(
+    suspend fun getRegionPair(
         x: Int,
         z: Int,
         loadIfNotLoaded: Boolean = true,
-    ): Pair<SurfRegion, Boolean> {
-        val region = _regions.find { it.x == x && it.z == z }
+        createIfNotExists: Boolean = true,
+    ): Pair<SurfRegion?, Boolean> {
+        val key = RegionKey(x, z)
+        var region = _regions[key]
+        var created = false
 
-        if (region != null) {
-            if (!region.loaded && loadIfNotLoaded) {
-                region.load()
+        if (region == null) {
+            if (!createIfNotExists) {
+                return region to false
             }
 
-            return region to false
+            region = SurfRegion(worldId, x, z, worldRegionsFolder).apply {
+                _regions[key] = this
+            }
+
+            created = true
         }
 
-        return SurfRegion(worldId, x, z, worldRegionsFolder).apply {
-            _regions.add(this)
+        if (loadIfNotLoaded) {
+            loadRegion(region)
+        }
 
-            if (loadIfNotLoaded) {
-                load()
-            }
-        } to true
+        return region to created
     }
 
-    suspend fun loadRegion(x: Int, z: Int): SurfRegion = loadOrCreateRegion(x, z).first
-
-    suspend fun loadOrCreateRegion(x: Int, z: Int): Pair<SurfRegion, Boolean> {
-        val (region, created) = getOrCreateRegion(x, z, false)
-
-        if (!region.loaded && !created) {
+    suspend fun loadRegion(region: SurfRegion) {
+        if (!region.loaded) {
             region.load()
 
             instance.loadHandlers.forEach { handler ->
                 handler.handle(region)
             }
         }
-
-        return region to created
     }
 
-    suspend fun saveRegion(x: Int, z: Int) {
-        val region = getRegion(x, z, loadIfNotLoaded = false)
-
+    suspend fun saveRegion(region: SurfRegion) {
         region.save()
 
         instance.saveHandlers.forEach { handler ->
@@ -76,27 +75,22 @@ class RegionManager(
     }
 
     suspend fun saveAll() = coroutineScope {
-        _regions.map {
+        _regions.values.map { region ->
             async {
-                saveRegion(it.x, it.z)
+                saveRegion(region)
             }
         }.awaitAll()
-
-        Unit
     }
 
     suspend fun unloadRegion(
-        x: Int,
-        z: Int,
+        region: SurfRegion,
         saveBeforeUnload: Boolean = true,
     ) {
-        val region = _regions.find { it.x == x && it.z == z } ?: return
-
         if (region.loaded && saveBeforeUnload) {
-            saveRegion(x, z)
+            saveRegion(region)
         }
 
-        _regions.remove(region)
+        _regions.remove(RegionKey(region.x, region.z))
 
         instance.unloadHandlers.forEach { handler ->
             handler.handle(region)

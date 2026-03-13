@@ -9,26 +9,34 @@ import kotlinx.serialization.Serializable
 data class SurfChunk(
     val chunkX: Int,
     val chunkZ: Int,
-    private val blocks: MutableList<SurfBlock> = mutableListOf(),
-    override val persistentDataContainer: PersistentDataContainer = PersistentDataContainer()
 ) : HasPersistentData {
+    override val persistentDataContainer: PersistentDataContainer = PersistentDataContainer()
+    private val sections = arrayOfNulls<ChunkSection>(24)
+
     override val isDirty: Boolean
-        get() = persistentDataContainer.isDirty || blocks.any { it.isDirty }
+        get() = persistentDataContainer.isDirty || sections.any { it?.isDirty == true }
 
     override fun markClean() {
         persistentDataContainer.markClean()
-        blocks.forEach { it.markClean() }
+        sections.forEach { it?.markClean() }
     }
 
-    fun toCoordinates() = (chunkX shl 4) to (chunkZ shl 4)
-
     fun getBlockAt(x: Int, y: Int, z: Int): SurfBlock {
-        val block = blocks.find { it.x == x && it.y == y && it.z == z }
-        if (block != null) return block
+        val sectionIndex = y shr 4
+        val sectionY = y and 15
 
-        return SurfBlock(x, y, z).apply {
-            blocks.add(this)
+        var section = sections[sectionIndex]
+
+        if (section == null) {
+            section = ChunkSection()
+            sections[sectionIndex] = section
         }
+
+        return section.getOrCreateBlock(
+            x and 15,
+            sectionY,
+            z and 15
+        )
     }
 
     override fun equals(other: Any?): Boolean {
@@ -39,7 +47,7 @@ data class SurfChunk(
 
         if (chunkX != other.chunkX) return false
         if (chunkZ != other.chunkZ) return false
-        if (blocks != other.blocks) return false
+        if (!sections.contentEquals(other.sections)) return false
 
         return true
     }
@@ -47,11 +55,11 @@ data class SurfChunk(
     override fun hashCode(): Int {
         var result = chunkX
         result = 31 * result + chunkZ
-        result = 31 * result + blocks.hashCode()
+        result = 31 * result + sections.contentHashCode()
         return result
     }
 
     override fun toString(): String {
-        return "SurfChunk(chunkX=$chunkX, chunkZ=$chunkZ, blocks=$blocks, persistentDataContainer=$persistentDataContainer)"
+        return "SurfChunk(chunkX=$chunkX, chunkZ=$chunkZ, persistentDataContainer=$persistentDataContainer, sections=${sections.contentToString()}, isDirty=$isDirty)"
     }
 }

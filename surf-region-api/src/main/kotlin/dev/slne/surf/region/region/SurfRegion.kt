@@ -2,31 +2,35 @@ package dev.slne.surf.region.region
 
 import dev.slne.surf.region.block.SurfBlock
 import dev.slne.surf.region.chunk.SurfChunk
+import dev.slne.surf.region.chunk.chunkKey
 import dev.slne.surf.region.data.RegionDataSerializer
-import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.readText
+import java.util.concurrent.atomic.AtomicInteger
 
 class SurfRegion(
     val worldId: UUID,
     val x: Int,
     val z: Int,
-    private var folder: Path
+    folder: Path
 ) {
     private val file = folder.resolve("r.$x.$z.json").toFile()
     private val ioMutex = Mutex()
-    private val chunks = mutableObjectListOf<SurfChunk>()
+
+    val chunksLoaded = AtomicInteger(0)
+    private val chunks = Long2ObjectMaps.synchronize(mutableLong2ObjectMapOf<SurfChunk>())
 
     @Volatile
     var loaded: Boolean = false
         private set
 
-    val isDirty: Boolean get() = chunks.any { it.isDirty }
+    val isDirty: Boolean get() = chunks.values.any { it.isDirty }
 
     fun getBlockAt(x: Int, y: Int, z: Int): SurfBlock {
         val chunkX = x shr 4
@@ -37,11 +41,8 @@ class SurfRegion(
     }
 
     fun getChunkAt(x: Int, z: Int): SurfChunk {
-        val existing = chunks.find { it.chunkX == x && it.chunkZ == z }
-        if (existing != null) return existing
-
-        return SurfChunk(x, z).apply {
-            chunks.add(this)
+        return chunks.getOrPut(chunkKey(x, z)) {
+            SurfChunk(x, z)
         }
     }
 
@@ -54,17 +55,17 @@ class SurfRegion(
             return@withLock
         }
 
-        val content = withContext(Dispatchers.IO) { folder.readText() }
+        val content = withContext(Dispatchers.IO) { file.readText() }
         val deserialized = RegionDataSerializer.decode(content)
 
         chunks.clear()
-        chunks.addAll(deserialized)
+        chunks.putAll(deserialized.associateBy { chunkKey(it.chunkX, it.chunkZ) })
 
         loaded = true
     }
 
     suspend fun save() = ioMutex.withLock {
-        if (loaded && !isDirty) return@withLock
+        if (!loaded || !isDirty) return@withLock
 
         withContext(Dispatchers.IO) {
             file.parentFile.mkdirs()
@@ -73,10 +74,10 @@ class SurfRegion(
                 file.createNewFile()
             }
 
-            file.writeText(RegionDataSerializer.encode(chunks))
+            file.writeText(RegionDataSerializer.encode(chunks.values.toList()))
         }
 
-        chunks.forEach { chunk ->
+        chunks.forEach { (_, chunk) ->
             chunk.markClean()
         }
     }
