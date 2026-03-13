@@ -1,13 +1,7 @@
 plugins {
-    id("dev.slne.surf.surfapi.gradle.paper-plugin") version "1.21.11+"
-}
-
-surfPaperPluginApi {
-    mainClass("dev.slne.surf.region.paper.SurfRegionPlugin")
-    generateLibraryLoader(false)
-    authors.add("SLNE")
+    id("dev.slne.surf.surfapi.gradle.paper-raw")
 }
 
 dependencies {
-    api(project(":surf-region-api"))
+    api(projects.surfRegionApi)
 }

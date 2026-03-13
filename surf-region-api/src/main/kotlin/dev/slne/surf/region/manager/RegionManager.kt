@@ -1,62 +1,122 @@
 package dev.slne.surf.region.manager
 
-import dev.slne.surf.region.SurfRegion
-import kotlinx.coroutines.CoroutineScope
+import dev.slne.surf.region.RegionInstance
+import dev.slne.surf.region.region.SurfRegion
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Manages the lifecycle (load / save / cache) of [SurfRegion] instances.
- *
- * Regions are keyed by their *region coordinates* (not block coordinates). To convert world
- * block coordinates to region coordinates use integer division by 512, or equivalently a
- * right-shift by 9 bits (`blockX shr 9`, `blockZ shr 9`).
- */
 class RegionManager(
-    val folder: Path,
-    private val scope: CoroutineScope
+    val worldId: UUID,
+    regionsFolder: Path,
+    private val instance: RegionInstance
 ) {
-    private val regions = ConcurrentHashMap<Pair<Int, Int>, SurfRegion>()
+    private val _regions = ConcurrentHashMap.newKeySet<SurfRegion>()
+    val regions get() = _regions.toList()
 
-    /** Returns the cached [SurfRegion] for ([x], [z]) or creates an empty placeholder. */
-    fun getRegion(x: Int, z: Int): SurfRegion = regions.computeIfAbsent(Pair(x, z)) {
-        val file = File(folder.toFile(), "r.$x.$z.json")
-        SurfRegion(x, z, file)
-    }
+    private val worldRegionsFolder = regionsFolder.resolve(worldId.toString())
 
-    /**
-     * Returns the [SurfRegion] for ([x], [z]), loading it from disk if not yet loaded.
-     *
-     * Idempotent: if the region is already loaded the disk read is skipped.
-     */
-    suspend fun loadRegion(x: Int, z: Int): SurfRegion {
-        val region = getRegion(x, z)
-        if (!region.loaded) {
-            region.load()
+    suspend fun getRegion(
+        x: Int,
+        z: Int,
+        loadIfNotLoaded: Boolean = true,
+    ) = getOrCreateRegion(x, z, loadIfNotLoaded).first
+
+    suspend fun getOrCreateRegion(
+        x: Int,
+        z: Int,
+        loadIfNotLoaded: Boolean = true,
+    ): Pair<SurfRegion, Boolean> {
+        val region = _regions.find { it.x == x && it.z == z }
+
+        if (region != null) {
+            if (!region.loaded && loadIfNotLoaded) {
+                region.load()
+            }
+
+            return region to false
         }
-        return region
+
+        return SurfRegion(worldId, x, z, worldRegionsFolder).apply {
+            _regions.add(this)
+
+            if (loadIfNotLoaded) {
+                load()
+            }
+        } to true
     }
 
-    /** Persists the region at ([x], [z]) if it exists in the cache. */
+    suspend fun loadRegion(x: Int, z: Int): SurfRegion = loadOrCreateRegion(x, z).first
+
+    suspend fun loadOrCreateRegion(x: Int, z: Int): Pair<SurfRegion, Boolean> {
+        val (region, created) = getOrCreateRegion(x, z, false)
+
+        if (!region.loaded && !created) {
+            region.load()
+
+            instance.loadHandlers.forEach { handler ->
+                handler.handle(region)
+            }
+        }
+
+        return region to created
+    }
+
     suspend fun saveRegion(x: Int, z: Int) {
-        regions[Pair(x, z)]?.save()
+        val region = getRegion(x, z, loadIfNotLoaded = false)
+
+        region.save()
+
+        instance.saveHandlers.forEach { handler ->
+            handler.handle(region)
+        }
     }
 
-    /** Concurrently persists all cached regions. */
     suspend fun saveAll() = coroutineScope {
-        regions.values.map {
+        _regions.map {
             async {
-                it.save()
+                saveRegion(it.x, it.z)
             }
         }.awaitAll()
+
+        Unit
     }
 
-    /** Removes the region at ([x], [z]) from the in-memory cache. */
-    fun unloadRegion(x: Int, z: Int) {
-        regions.remove(Pair(x, z))
+    suspend fun unloadRegion(
+        x: Int,
+        z: Int,
+        saveBeforeUnload: Boolean = true,
+    ) {
+        val region = _regions.find { it.x == x && it.z == z } ?: return
+
+        if (region.loaded && saveBeforeUnload) {
+            saveRegion(x, z)
+        }
+
+        _regions.remove(region)
+
+        instance.unloadHandlers.forEach { handler ->
+            handler.handle(region)
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RegionManager
+
+        return worldId == other.worldId
+    }
+
+    override fun hashCode(): Int {
+        return worldId.hashCode()
+    }
+
+    override fun toString(): String {
+        return "RegionManager(worldId=$worldId, regions=$_regions, worldRegionsFolder=$worldRegionsFolder)"
     }
 }
