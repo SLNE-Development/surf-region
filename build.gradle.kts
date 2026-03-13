@@ -1,6 +1,26 @@
-plugins {
-    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+"
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
+
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
+    }
+    dependencies {
+        classpath("dev.slne.surf:surf-api-gradle-plugin:1.21.11+")
+    }
 }
 
-group = "dev.slne.surf"
-version = findProperty("version") as String
+allprojects {
+    group = "dev.slne.surf.region"
+    version = findProperty("version") as String
+}
+
+subprojects {
+    afterEvaluate {
+        extensions.findByType<KotlinJvmExtension>()?.apply {
+            compilerOptions {
+                optIn.add("dev.slne.surf.region.utils.InternalRegionApi")
+            }
+        }
+    }
+}
