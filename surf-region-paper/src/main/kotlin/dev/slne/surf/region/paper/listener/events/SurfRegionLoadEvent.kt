@@ -1,12 +1,13 @@
 package dev.slne.surf.region.paper.listener.events
 
 import dev.slne.surf.region.region.SurfRegion
+import org.bukkit.Bukkit
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
 class SurfRegionLoadEvent(
     val region: SurfRegion
-) : Event() {
+) : Event(!Bukkit.isPrimaryThread()) {
     override fun getHandlers() = HANDLER_LIST
 
     companion object {

@@ -5,7 +5,7 @@ import dev.slne.surf.region.paper.PaperRegionInstance
 import org.bukkit.plugin.java.JavaPlugin
 
 class PaperPlugin : SuspendingJavaPlugin() {
-    private val regionInstance = PaperRegionInstance(this)
+    private val regionInstance: PaperRegionInstance = PaperRegionInstance(this)
 
     override suspend fun onLoadAsync() {
         regionInstance.onLoad()

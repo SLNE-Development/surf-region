@@ -19,11 +19,11 @@ import java.nio.file.Path
 
 class PaperRegionInstance(
     val plugin: SuspendingJavaPlugin,
-    val scope: CoroutineScope = plugin.scope,
     regionsFolder: Path = plugin.dataPath.resolve("regions"),
     private val registerModificationListeners: Boolean = true,
 ) : RegionInstance(regionsFolder) {
     private val listeners = mutableObjectListOf<Listener>()
+    val scope: CoroutineScope by lazy { plugin.scope }
 
     suspend fun onLoad() {
     }
